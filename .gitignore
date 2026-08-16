@@ -1,0 +1,12 @@
+# Runtime env (user-specific, not committed)
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Semble ──────────────────────────────────────────────────────────────────
+.semble-cache/
+.git/semble/

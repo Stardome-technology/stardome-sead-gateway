@@ -1,0 +1,56 @@
+# Remote compose file — pulls the pre-built gateway image from ghcr.io.
+# Usage: docker compose -f docker-compose.remote.yml up -d
+#
+# The gateway is the single public HTTPS entry point for a SEAD node. It
+# terminates TLS, enforces auth, and routes to the internal C++ services
+# (sead-core, edge-service, storage-gateway, source-data-service) over the
+# shared `sead-network` bridge. It must run alongside a SEAD stack (see
+# https://github.com/Stardome-technology/stardome-sead).
+
+services:
+  gateway:
+    image: ghcr.io/stardome-technology/stardome-sead-gateway:latest
+    container_name: stardome-sead-gateway
+    ports:
+      - "30080:30080"
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      - GATEWAY_LISTEN_ADDR=${GATEWAY_LISTEN_ADDR:-:30080}
+      - GATEWAY_TLS_ENABLED=${GATEWAY_TLS_ENABLED:-false}
+      - GATEWAY_TLS_CERT=${GATEWAY_TLS_CERT:-}
+      - GATEWAY_TLS_KEY=${GATEWAY_TLS_KEY:-}
+      - GATEWAY_AUTH_ENABLED=${GATEWAY_AUTH_ENABLED:-true}
+      - GATEWAY_AUTH_SECRET=${GATEWAY_AUTH_SECRET:-}
+      - GATEWAY_EDGE_TOKENS=${GATEWAY_EDGE_TOKENS:-}
+      - GATEWAY_AUTH_CBOR_ENABLED=${GATEWAY_AUTH_CBOR_ENABLED:-true}
+      - GATEWAY_AUTH_CBOR_SEAD_CORE_URL=${GATEWAY_AUTH_CBOR_SEAD_CORE_URL:-http://sead-core:50051}
+      - GATEWAY_AUTH_CBOR_CACHE_TTL=${GATEWAY_AUTH_CBOR_CACHE_TTL:-60}
+      - GATEWAY_AUTH_CBOR_SKEW_TOLERANCE=${GATEWAY_AUTH_CBOR_SKEW_TOLERANCE:-30}
+      - GATEWAY_METRICS_ENABLED=${GATEWAY_METRICS_ENABLED:-true}
+      - GATEWAY_LOG_LEVEL=${GATEWAY_LOG_LEVEL:-info}
+      - GATEWAY_READ_TIMEOUT=${GATEWAY_READ_TIMEOUT:-30s}
+      - GATEWAY_WRITE_TIMEOUT=${GATEWAY_WRITE_TIMEOUT:-30s}
+      - GATEWAY_IDLE_TIMEOUT=${GATEWAY_IDLE_TIMEOUT:-90s}
+      - GATEWAY_PROXY_TIMEOUT=${GATEWAY_PROXY_TIMEOUT:-30s}
+      # Internal C++ services (gRPC-only, Go Gateway migration phase 4.4)
+      - SVC_SEAD_CORE_GRPC=${SVC_SEAD_CORE_GRPC:-sead-core:50051}
+      - SVC_EDGE_SERVICE_GRPC=${SVC_EDGE_SERVICE_GRPC:-edge-service:50055}
+      - SVC_STORAGE_GRPC=${SVC_STORAGE_GRPC:-storage-gateway:50052}
+      - SVC_SOURCE_DATA_GRPC=${SVC_SOURCE_DATA_GRPC:-source-data-service:50053}
+      - GATEWAY_GRPC_PORT=${GATEWAY_GRPC_PORT:-50054}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:30080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - sead-network
+
+networks:
+  sead-network:
+    name: sead-network
+    external: true
