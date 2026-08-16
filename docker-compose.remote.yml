@@ -34,7 +34,7 @@ services:
       - GATEWAY_WRITE_TIMEOUT=${GATEWAY_WRITE_TIMEOUT:-30s}
       - GATEWAY_IDLE_TIMEOUT=${GATEWAY_IDLE_TIMEOUT:-90s}
       - GATEWAY_PROXY_TIMEOUT=${GATEWAY_PROXY_TIMEOUT:-30s}
-      # Internal C++ services (gRPC-only, Phase 4.4)
+      # Internal C++ services (gRPC-only, Go Gateway migration phase 4.4)
       - SVC_SEAD_CORE_GRPC=${SVC_SEAD_CORE_GRPC:-sead-core:50051}
       - SVC_EDGE_SERVICE_GRPC=${SVC_EDGE_SERVICE_GRPC:-edge-service:50055}
       - SVC_STORAGE_GRPC=${SVC_STORAGE_GRPC:-storage-gateway:50052}

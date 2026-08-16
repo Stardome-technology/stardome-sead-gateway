@@ -69,7 +69,7 @@ host firewall (and any cloud security group):
 
 - **`30080/tcp`** — HTTPS public API (all endpoints)
 
-The gateway is the cross-org entry point (Phase 4.4, replaces sead-core's former public port).
+The gateway is the cross-org entry point (Go Gateway migration phase 4.4, replaces sead-core's former public port).
 See the [public port contract](https://github.com/Stardome-technology/stardome-sead/blob/main/docs/public-port-contract.md)
 for the full list of standardized federation ports.
 
