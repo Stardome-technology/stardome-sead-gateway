@@ -12,12 +12,12 @@ services:
     image: ghcr.io/stardome-technology/stardome-sead-gateway:latest
     container_name: stardome-sead-gateway
     ports:
-      - "8443:8443"
+      - "30080:30080"
     env_file:
       - path: .env
         required: true
     environment:
-      - GATEWAY_LISTEN_ADDR=${GATEWAY_LISTEN_ADDR:-:8443}
+      - GATEWAY_LISTEN_ADDR=${GATEWAY_LISTEN_ADDR:-:30080}
       - GATEWAY_TLS_ENABLED=${GATEWAY_TLS_ENABLED:-false}
       - GATEWAY_TLS_CERT=${GATEWAY_TLS_CERT:-}
       - GATEWAY_TLS_KEY=${GATEWAY_TLS_KEY:-}
@@ -41,7 +41,7 @@ services:
       - SVC_SOURCE_DATA_GRPC=${SVC_SOURCE_DATA_GRPC:-source-data-service:50053}
       - GATEWAY_GRPC_PORT=${GATEWAY_GRPC_PORT:-50054}
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8443/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:30080/health"]
       interval: 15s
       timeout: 5s
       retries: 3

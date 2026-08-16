@@ -14,7 +14,7 @@ graph LR
     end
 
     subgraph "SEAD Node"
-        GW[Go Gateway :8443<br/>TLS · auth · validate · proxy · metrics]
+        GW[Go Gateway :30080<br/>TLS · auth · validate · proxy · metrics]
         SC[sead-core :50051 gRPC]
         ED[edge-service :50055 gRPC]
         ST[storage-gateway :50052 gRPC]
@@ -54,7 +54,7 @@ docker compose -f docker-compose.remote.yml pull
 docker compose -f docker-compose.remote.yml up -d
 
 # 3. Verify
-curl http://localhost:8443/health
+curl http://localhost:30080/health
 ```
 
 > **Network:** the gateway joins the external `sead-network` bridge that the
@@ -67,9 +67,9 @@ curl http://localhost:8443/health
 For the gateway to be reachable by third-party / cross-org clients, open on the
 host firewall (and any cloud security group):
 
-- **`8443/tcp`** — HTTPS public API (all endpoints)
+- **`30080/tcp`** — HTTPS public API (all endpoints)
 
-The gateway replaces `sead-core:30080` as the cross-org entry point (Phase 4.4).
+The gateway is the cross-org entry point (Phase 4.4, replaces sead-core's former public port).
 See the [public port contract](https://github.com/Stardome-technology/stardome-sead/blob/main/docs/public-port-contract.md)
 for the full list of standardized federation ports.
 
@@ -82,7 +82,7 @@ All configuration via environment variables (see `.env.example`):
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `GATEWAY_LISTEN_ADDR` | `:8443` | Address to listen on |
+| `GATEWAY_LISTEN_ADDR` | `:30080` | Address to listen on |
 | `GATEWAY_TLS_ENABLED` | `false` | Enable TLS termination |
 | `GATEWAY_TLS_CERT` | | Path to TLS certificate |
 | `GATEWAY_TLS_KEY` | | Path to TLS private key |
