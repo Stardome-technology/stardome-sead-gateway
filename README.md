@@ -69,6 +69,10 @@ host firewall (and any cloud security group):
 
 - **`8443/tcp`** — HTTPS public API (all endpoints)
 
+The gateway replaces `sead-core:30080` as the cross-org entry point (Phase 4.4).
+See the [public port contract](https://github.com/Stardome-technology/stardome-sead/blob/main/docs/public-port-contract.md)
+for the full list of standardized federation ports.
+
 The internal gRPC ports (`50051`–`50055`) are **private** and must NOT be
 exposed publicly — they are reachable only on the `sead-network` bridge.
 
