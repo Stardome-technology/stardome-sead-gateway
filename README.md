@@ -89,8 +89,7 @@ All configuration via environment variables (see `.env.example`):
 | `GATEWAY_AUTH_ENABLED` | `true` | Enable Bearer token auth |
 | `GATEWAY_AUTH_SECRET` | | Shared secret for token validation |
 | `GATEWAY_EDGE_TOKENS` | | Comma-separated edge token secrets |
-| `GATEWAY_AUTH_CBOR_ENABLED` | `true` | CBOR auth-token verification |
-| `GATEWAY_AUTH_CBOR_SEAD_CORE_URL` | `http://sead-core:50051` | sead-core for key resolution |
+| `GATEWAY_AUTH_CBOR_ENABLED` | `true` | CBOR auth-token verification (key resolution via SVC_SEAD_CORE_GRPC) |
 | `GATEWAY_AUTH_CBOR_CACHE_TTL` | `60` | Key cache TTL (s) |
 | `GATEWAY_AUTH_CBOR_SKEW_TOLERANCE` | `30` | Token skew tolerance (s) |
 | `GATEWAY_METRICS_ENABLED` | `true` | Enable `/metrics` endpoint |
