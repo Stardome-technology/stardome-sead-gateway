@@ -53,14 +53,37 @@ cp .env.example .env
 docker compose -f docker-compose.remote.yml pull
 docker compose -f docker-compose.remote.yml up -d
 
-# 3. Verify
-curl http://localhost:30080/health
+# 3. Verify (TLS on by default; -k for self-signed)
+curl -k https://localhost:30080/health
 ```
 
 > **Network:** the gateway joins the external `sead-network` bridge that the
 > SEAD stack creates. It resolves the internal services by their compose
 > service names (`sead-core`, `edge-service`, `storage-gateway`,
 > `source-data-service`). Start the SEAD stack first so the network exists.
+
+### TLS: public cert (production) vs self-signed (isolated/own-party)
+
+The gateway serves whatever cert you point `GATEWAY_TLS_CERT`/`GATEWAY_TLS_KEY`
+at. Choose based on who connects to `:30080`:
+
+- **Production / cross-org (default posture) — public cert.** Use a
+  Let's Encrypt (or other CA) certificate for the gateway's public hostname.
+  Third-party orgs' brokers/nodes then trust it through the standard PKI with
+  no manual CA distribution. Obtain one with `certbot` (see
+  `stardome-sead/docs/setup-vps.md` for the Nginx+certbot flow) and set the
+  cert/key paths in `.env`.
+- **Isolated / own-party only — self-signed.** For isolated deployments where
+  every node is under your control, a self-signed cert avoids public cert
+  issuance. Mount `./certs/server.{crt,key}` and have your own clients trust
+  the CA (`SEAD_CA_CERT` in the broker/explorer). Do **not** use this for a
+  gateway reachable by genuine third parties.
+
+> **Why not a CA "over the SEAD"?** SEAD already has its own trust model (the
+> DAG: org genesis → edge authorization → XMSS signatures). TLS is only
+> *transport* encryption — it must not become a second authority layered on
+> top of the DAG. Keep transport trust (public PKI at the edge, private CA/mTLS
+> internally) separate from SEAD identity.
 
 ## Public ports to open
 
@@ -83,9 +106,9 @@ All configuration via environment variables (see `.env.example`):
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GATEWAY_LISTEN_ADDR` | `:30080` | Address to listen on |
-| `GATEWAY_TLS_ENABLED` | `false` | Enable TLS termination |
-| `GATEWAY_TLS_CERT` | | Path to TLS certificate |
-| `GATEWAY_TLS_KEY` | | Path to TLS private key |
+| `GATEWAY_TLS_ENABLED` | `true` | Enable TLS termination (integrator mounts a self-signed cert in `./certs`) |
+| `GATEWAY_TLS_CERT` | `/etc/gateway/certs/server.crt` | Path to TLS certificate |
+| `GATEWAY_TLS_KEY` | `/etc/gateway/certs/server.key` | Path to TLS private key |
 | `GATEWAY_AUTH_ENABLED` | `true` | Enable Bearer token auth |
 | `GATEWAY_AUTH_SECRET` | | Shared secret for token validation |
 | `GATEWAY_EDGE_TOKENS` | | Comma-separated edge token secrets |
