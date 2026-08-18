@@ -36,6 +36,35 @@ with the gateway's gRPC Sync server (`/sead_rpc.Sync`) on `GATEWAY_GRPC_PORT`
 
 ## Deploy
 
+### Standalone gateway vs the combined SEAD stack
+
+The gateway is **already bundled** inside the `stardome-sead`
+[`docker-compose.remote.yml`](https://github.com/Stardome-technology/stardome-sead/blob/main/docker-compose.remote.yml)
+as a `gateway` service. That combined stack is the normal path for a full SEAD
+node — you should **not** deploy this repo's gateway alongside it, or you'll get
+two gateways fighting over port `30080`.
+
+In the combined stack the cert mount is `./secrets:/etc/gateway/certs:ro`, so
+`server.crt` + `server.key` go in `~/stardome-sead/secrets/`. In this
+standalone repo the mount is `./certs:/etc/gateway/certs:ro`, so they go in
+`~/stardome-sead-gateway/certs/`. The deployed file names are the same either
+way.
+
+The **standalone** gateway repo is for cases where you want the gateway as the
+single public HTTPS entry point **without** running the full C++ services, or
+where the gateway runs on a separate host/VM from its backend:
+
+- **IPFS-auth / minimal stack** — a minimal `sead-core` + gateway node that only
+  exposes IPFS pinning (see
+  [stardome-ipfs](https://github.com/Stardome-technology/stardome-ipfs)).
+- **Gateway on its own host** — you run `stardome-sead` on node A and put this
+  gateway on node B, pointing `SVC_*_GRPC` at A's services. Both must be on the
+  same `sead-network` bridge (or the target must otherwise be DNS-resolvable
+  from the gateway container).
+
+In every case, at least one `sead-core` is required so the gateway can resolve
+keys; the gateway cannot serve events/pins on its own.
+
 ### Prerequisites
 
 - Docker + Docker Compose plugin
