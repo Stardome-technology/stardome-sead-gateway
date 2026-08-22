@@ -76,7 +76,7 @@ keys; the gateway cannot serve events/pins on its own.
 ```bash
 # 1. Configure runtime env
 cp .env.example .env
-#    edit .env — set GATEWAY_AUTH_SECRET, TLS, and service targets
+#    edit .env — set SEAD_AUTH_SECRET, TLS, and service targets
 
 # 2. Pull and run (joins the existing sead-network bridge)
 docker compose -f docker-compose.remote.yml pull
@@ -139,7 +139,7 @@ All configuration via environment variables (see `.env.example`):
 | `GATEWAY_TLS_CERT` | `/etc/gateway/certs/server.crt` | Path to TLS certificate |
 | `GATEWAY_TLS_KEY` | `/etc/gateway/certs/server.key` | Path to TLS private key |
 | `GATEWAY_AUTH_ENABLED` | `true` | Enable Bearer token auth |
-| `GATEWAY_AUTH_SECRET` | | Shared secret for token validation |
+| `SEAD_AUTH_SECRET` | | Shared secret for token validation |
 | `GATEWAY_EDGE_TOKENS` | | Comma-separated edge token secrets |
 | `GATEWAY_AUTH_CBOR_ENABLED` | `true` | CBOR auth-token verification (key resolution via SVC_SEAD_CORE_GRPC) |
 | `GATEWAY_AUTH_CBOR_CACHE_TTL` | `60` | Key cache TTL (s) |
