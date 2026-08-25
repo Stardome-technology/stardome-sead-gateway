@@ -19,10 +19,12 @@ graph LR
         ED[edge-service :50055 gRPC]
         ST[storage-gateway :50052 gRPC]
         SD[source-data-service :50053 gRPC]
+        PS[pin-service :50056 gRPC<br/>sead_rpc.Storage]
         GW -->|gRPC| SC
         GW -->|gRPC| ED
         GW -->|gRPC| ST
         GW -->|gRPC| SD
+        GW -->|gRPC| PS
     end
 
     Client -->|HTTPS| GW
@@ -33,6 +35,11 @@ The gateway is the **only** public surface of a SEAD node. The C++ services are
 internal `sead-network` bridge. Cross-node sync fetch is gateway↔gateway HTTPS,
 with the gateway's gRPC Sync server (`/sead_rpc.Sync`) on `GATEWAY_GRPC_PORT`
 (50054) serving `sead-sync`'s cross-node fetch requests.
+
+The pin service (`pin-service:50056`) owns the IPFS boundary. The gateway's
+`/pin` and `/cid` endpoints route to the pin service over gRPC; the pin service
+implements the `sead_rpc.Storage` gRPC service (`AddToIPFS`, `RetrieveFromIPFS`)
+using Go's `net/http` with correct TLS.
 
 ## Deploy
 
@@ -178,8 +185,8 @@ All configuration via environment variables (see `.env.example`):
 | `/events/by-org/{org}/revocations` | GET | sead-core |
 | `/events/by-edge/{org}/{edge}/revocations` | GET | sead-core |
 | `/events/{id}/dependencies` | GET | sead-core |
-| `/pin` | POST | gateway (native Go IPFS client) |
-| `/cid/{hash}` | GET | gateway (native Go IPFS client) |
+| `/pin` | POST | gateway → pin-service (Go IPFS client owns the IPFS boundary) |
+| `/cid/{hash}` | GET | gateway → pin-service (Go IPFS client owns the IPFS boundary) |
 | `/verify` | POST | gateway (collapsed verifier) |
 | `/disclosure/request` | POST | source-data-service |
 | `/source-data/{hash}` | GET | source-data-service |
