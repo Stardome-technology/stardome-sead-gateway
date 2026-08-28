@@ -34,7 +34,7 @@ The gateway is the **only** public surface of a SEAD node. The C++ services are
 **gRPC-only** and publish no public HTTP ports — they are reachable only on the
 internal `sead-network` bridge. Cross-node sync fetch is gateway↔gateway HTTPS,
 with the gateway's gRPC Sync server (`/sead_rpc.Sync`) on `GATEWAY_GRPC_PORT`
-(50054) serving `sead-sync`'s cross-node fetch requests.
+(50054) serving `gossip-node`'s cross-node fetch requests.
 
 The pin service (`pin-service:50056`) owns the IPFS boundary. The gateway's
 `/pin` and `/cid` endpoints route to the pin service over gRPC; the pin service
@@ -100,8 +100,9 @@ curl -k https://localhost:30080/health
 
 ### TLS: public cert (production) vs self-signed (isolated/own-party)
 
-The gateway serves whatever cert you point `GATEWAY_TLS_CERT`/`GATEWAY_TLS_KEY`
-at. Choose based on who connects to `:30080`:
+The gateway terminates TLS using the certificate and key you point
+`GATEWAY_TLS_CERT`/`GATEWAY_TLS_KEY` at. Choose based on who connects to
+`:30080`:
 
 - **Production / cross-org (default posture) — public cert.** Use a
   Let's Encrypt (or other CA) certificate for the gateway's public hostname.
