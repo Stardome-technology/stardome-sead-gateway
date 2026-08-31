@@ -1,9 +1,11 @@
 # Stardome SEAD Gateway
 
 **Single public HTTPS entry point for a SEAD node.** Terminates TLS, enforces
-auth, and routes to the internal C++ services (sead-core, edge-service,
-storage-gateway, source-data-service) over the shared `sead-network` bridge.
-Runs as a sidecar alongside each SEAD stack.
+auth, and routes to the internal gRPC services (sead-core, edge-service,
+source-data-service, pin-service) over the shared `sead-network` bridge.
+Runs as a sidecar alongside each SEAD stack. The gateway is a **pure router**:
+it holds no storage/IPFS logic or CID state — every storage call (pin,
+retrieve, CID resolution) moves over gRPC to the pin service.
 
 ## Architecture
 
@@ -14,15 +16,13 @@ graph LR
     end
 
     subgraph "SEAD Node"
-        GW[Go Gateway :30080<br/>TLS · auth · validate · proxy · metrics]
+        GW[Go Gateway :30080<br/>TLS · auth · validate · route · metrics]
         SC[sead-core :50051 gRPC]
         ED[edge-service :50055 gRPC]
-        ST[storage-gateway :50052 gRPC]
         SD[source-data-service :50053 gRPC]
-        PS[pin-service :50056 gRPC<br/>sead_rpc.Storage]
+        PS[pin-service :50056 gRPC<br/>sead_rpc.Storage — sole storage authority]
         GW -->|gRPC| SC
         GW -->|gRPC| ED
-        GW -->|gRPC| ST
         GW -->|gRPC| SD
         GW -->|gRPC| PS
     end
@@ -36,10 +36,12 @@ internal `sead-network` bridge. Cross-node sync fetch is gateway↔gateway HTTPS
 with the gateway's gRPC Sync server (`/sead_rpc.Sync`) on `GATEWAY_GRPC_PORT`
 (50054) serving `gossip-node`'s cross-node fetch requests.
 
-The pin service (`pin-service:50056`) owns the IPFS boundary. The gateway's
-`/pin` and `/cid` endpoints route to the pin service over gRPC; the pin service
-implements the `sead_rpc.Storage` gRPC service (`AddToIPFS`, `RetrieveFromIPFS`)
-using Go's `net/http` with correct TLS.
+The pin service (`pin-service:50056`) owns the IPFS boundary and is the **sole
+storage authority**. The gateway's `/pin`, `/cid`, and verify `resolveCID`
+route to the pin service over gRPC; the pin service implements the
+`sead_rpc.Storage` gRPC service (`AddToIPFS`, `RetrieveFromIPFS`,
+`ResolveCIDByPayloadHash`) using Go's `net/http` with correct TLS. There is no
+storage-gateway service anymore.
 
 ## Deploy
 
@@ -95,7 +97,7 @@ curl -k https://localhost:30080/health
 
 > **Network:** the gateway joins the external `sead-network` bridge that the
 > SEAD stack creates. It resolves the internal services by their compose
-> service names (`sead-core`, `edge-service`, `storage-gateway`,
+> service names (`sead-core`, `edge-service`, `pin-service`,
 > `source-data-service`). Start the SEAD stack first so the network exists.
 
 ### TLS: public cert (production) vs self-signed (isolated/own-party)
@@ -160,7 +162,7 @@ All configuration via environment variables (see `.env.example`):
 | `GATEWAY_PROXY_TIMEOUT` | `30s` | Upstream proxy timeout |
 | `SVC_SEAD_CORE_GRPC` | `sead-core:50051` | sead-core gRPC target |
 | `SVC_EDGE_SERVICE_GRPC` | `edge-service:50055` | edge-service gRPC target |
-| `SVC_STORAGE_GRPC` | `storage-gateway:50052` | storage-gateway gRPC target |
+| `SVC_STORAGE_GRPC` | `pin-service:50056` | pin-service gRPC target (gateway `/pin` `/cid` + verify proxy here) |
 | `SVC_SOURCE_DATA_GRPC` | `source-data-service:50053` | source-data-service gRPC target |
 | `GATEWAY_GRPC_PORT` | `50054` | Gateway Sync gRPC port |
 
