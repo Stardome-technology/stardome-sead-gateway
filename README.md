@@ -210,6 +210,11 @@ it references the published `ghcr.io` image and documents the runtime
 configuration. See the private repo's `Makefile` for the multi-arch build/push
 workflow.
 
+## Git workflow
+This repository follows GitHub Flow (https://docs.github.com/en/get-started/using-github/github-flow).
+The authoritative rules for contributors and agents are in the `## Git workflow`
+section of [AGENTS.md](AGENTS.md).
+
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).
