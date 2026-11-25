@@ -9,7 +9,15 @@
 
 services:
   gateway:
-    image: ghcr.io/stardome-technology/stardome-sead-gateway:latest
+    # Pinned to a release tag AND the digest of the multi-arch index ghcr.io
+    # serves for it, so a node runs that build until the pin is bumped here.
+    # `latest` is not used: it moves with every publish, and from v0.1.0 the
+    # image runs as `sead` (uid/gid 10001), which changes what it can read.
+    # Bump both the tag and the digest together:
+    #   docker buildx imagetools inspect \
+    #     ghcr.io/stardome-technology/stardome-sead-gateway:0.1.0
+    # and take the `Digest:` line under `Name:`, not a per-platform digest.
+    image: ghcr.io/stardome-technology/stardome-sead-gateway:0.1.0@sha256:5f9046952a2f3c7bd789996ef8c473659d53973447da099111a4b66ce185414f
     container_name: stardome-sead-gateway
     ports:
       - "30080:30080"
@@ -43,7 +51,14 @@ services:
       - SVC_SOURCE_DATA_GRPC=${SVC_SOURCE_DATA_GRPC:-source-data-service:50053}
       - GATEWAY_GRPC_PORT=${GATEWAY_GRPC_PORT:-50054}
     healthcheck:
-      test: ["CMD", "wget", "--no-check-certificate", "-qO-", "https://localhost:30080/health"]
+      # The v0.1.0 image dropped `wget` (change gateway-healthcheck-subcommand),
+      # so a wget-based probe can never pass and the container stays unhealthy
+      # forever. The gateway's own subcommand loads the same config the server
+      # loads, so it follows GATEWAY_TLS_ENABLED and GATEWAY_LISTEN_ADDR, and it
+      # skips TLS verification on purpose (it is a self-probe of our own cert).
+      # Exit codes are a stable contract: 0 healthy, 3 listener down,
+      # 4 backends unreachable, 5 draining.
+      test: ["CMD", "/app/gateway", "healthcheck"]
       interval: 15s
       timeout: 5s
       retries: 3
