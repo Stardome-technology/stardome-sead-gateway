@@ -59,6 +59,25 @@ standalone repo the mount is `./certs:/etc/gateway/certs:ro`, so they go in
 `~/stardome-sead-gateway/certs/`. The deployed file names are the same either
 way.
 
+**The private key must be readable by uid `10001`.** From `v0.1.0` the gateway
+image runs as `sead` (uid/gid `10001`), and it drops all capabilities, so it
+obeys file permissions like any user — root included. A `server.key` at mode
+`0600` owned by anyone else, root or your login user, makes the gateway exit at
+start with `permission denied` and crash-loop. Set the owner and mode on the
+host, in the directory the compose file mounts:
+
+```bash
+# Group-readable by 10001: the host usually has no `sead` user, so use the
+# numeric gid. `root:10001 0640` keeps the key out of the operator's hands.
+sudo chown root:10001 certs/server.key
+sudo chmod 640 certs/server.key
+sudo stat -c '%U:%G %a' certs/server.key   # → root:10001 640
+```
+
+`server.crt` is public and needs no special ownership. On Docker Desktop the
+mounted file appears to the container as owned by its user, so the mode alone
+is enough there.
+
 The **standalone** gateway repo is for cases where you want the gateway as the
 single public HTTPS entry point **without** running the full C++ services, or
 where the gateway runs on a separate host/VM from its backend:
@@ -78,7 +97,13 @@ keys; the gateway cannot serve events/pins on its own.
 
 - Docker + Docker Compose plugin
 - A running SEAD stack (see [stardome-sead](https://github.com/Stardome-technology/stardome-sead))
-- The gateway image is pre-built at `ghcr.io/stardome-technology/stardome-sead-gateway:latest` (multi-arch amd64 + arm64)
+- The gateway image is pre-built at
+  `ghcr.io/stardome-technology/stardome-sead-gateway` (multi-arch amd64 +
+  arm64). `docker-compose.remote.yml` pins it as
+  `<tag>@sha256:<digest>` — a release tag plus the digest of the multi-arch
+  index — so a node runs that build until the pin is bumped. Do not switch it
+  back to `:latest`: the tag moves with every publish, and from `v0.1.0` the
+  image runs as uid `10001`, which changes what it can read on the host.
 
 ### Quick start
 
